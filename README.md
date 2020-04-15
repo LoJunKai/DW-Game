@@ -11,7 +11,7 @@
 ## Stage 1 of development
   - Randomised world
   - Gold blocks
-  - Use cmd to parse command line inputs
+  - [Use cmd to parse command line inputs](https://wiki.python.org/moin/CmdModule)
   - Use readline to enable input history
 
 ## Stage 2 of development
