@@ -13,6 +13,9 @@
   - Gold blocks
   - [Use cmd to parse command line inputs](https://wiki.python.org/moin/CmdModule)
   - Use readline to enable input history
+  - Implement state machines
+  - walking
+  - digging and collecting points
 
 ## Stage 2 of development
   - The blocks will be covered with #, until digged (or undigged ' ', digged '.'(dot))
