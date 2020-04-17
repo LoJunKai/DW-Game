@@ -42,7 +42,8 @@
 ### Types of blocks:
 | Block | Points | Description |
 | --- | --- | --- |
-| Ruby | 15 | Hehehe |
-| Gold | 5 | $$$ |
-| Gunk | -1 | This sticky mess clogs up your drill bits |
-| Lava | -100 | This corrodes away your armour in seconds |
+| Ruby | 75 | Hehehe |
+| Gold | 25 | $$$ |
+| Dirt | -1 | Normal ground |
+| Gunk | -5 | This sticky mess clogs up your drill bits |
+| Lava | -1000 | This corrodes away your armour in seconds |
