@@ -15,7 +15,7 @@
   - Use readline to enable input history
   - Implement state machines
   - walking
-  - digging and collecting points
+  - digging and collecting coins
 
 ## Stage 2 of development
   - The blocks will be covered with #, until digged (or undigged ' ', digged '.'(dot))
@@ -40,7 +40,7 @@
 # Mechanics
 
 ### Types of blocks:
-| Block | Points | Description |
+| Block | Coins | Description |
 | --- | --- | --- |
 | Ruby | 75 | Hehehe |
 | Gold | 25 | $$$ |
