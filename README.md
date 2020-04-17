@@ -22,9 +22,9 @@
   - Setting of checkpoints available (bought from the store) (can teleport between checkpoints)
   - Difficulty levels implemented (easy, medium, hard)
     - easy --> same as stage 1
-    - medium --> Have gunk blocks that saps 1 energy to clean
+    - medium --> Have junk blocks that saps 1 energy to clean
     - hard (stage 3) --> Lava blocks that instantly kill the player
-  - Blocks generator function is tied to the gold blocks - higher distribution of gunk near gold blocks
+  - Blocks generator function is tied to the gold blocks - higher distribution of junk near gold blocks
 
 ## Stage 3 of development
   - Only closer blocks will be revealed, but this comes as an upgrade
@@ -45,5 +45,5 @@
 | Ruby | 75 | Hehehe |
 | Gold | 25 | $$$ |
 | Dirt | -1 | Normal ground |
-| Gunk | -5 | This sticky mess clogs up your drill bits |
+| Junk | -5 | This sticky mess clogs up your drill bits |
 | Lava | -1000 | This corrodes away your armour in seconds |
