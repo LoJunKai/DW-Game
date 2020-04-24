@@ -15,14 +15,20 @@ except:
 
 '''
 # TODO
+# Major Error: Currently once do_set_checkpoints is deleted, cannot be set back
+# Tutorial:
+I thought of a short cut to make my tutorial super easy to implement
+Since I already have help functions, I shall just ask them to use the help functions
+Then I just write a bit on the game mechanics and shortcut
+Then provide them with unlimited health as a sandbox for them
+
 # Game mechanic: Anyway to add spaces after do_dig, so that it will be dig .
-# Game mechanic: Set boundary of travallable area to exclude the first row (so that H won't get eaten up)
 # Game mechanic: Show what has been excavated so that users would know
 # Intro message: type <help or ?> followed by <command> to get more info on the command
 # Intro message: when an empty line is entered, the previous input would be run. So becareful on that!
 # Intro message: use up down keys to cycle through command history
 # Intro message: press <tab> to auto complete input or to show list of commands available
-# State machine: implement nested interpreters when changing from different states
+# if you want: When you lose, print the mmap of the losing position
 '''
 
 class App(cmd.Cmd, sm.SM):
@@ -31,133 +37,209 @@ class App(cmd.Cmd, sm.SM):
     def __init__(self):
         print("\n__Start message here__")
         super(App, self).__init__()
+        self.start()
 
-    def intro(self):
         # Introductory message
         print("Once upon a time.....")
         print("\n__Welcome to Minilode__")
         ans = input("press <enter> to continue: ")
 
         if ans == 'skip':
-            changes = self.step("Home")
-            home = Home(changes)
-            home.cmdloop()
-
+            return self.step("Home")()
         else:
-            self.step("Tutorial")
+            return self.step("Tutorial")()
 
-    def do_play(self, argv):
-        self.step("Play")
+    def ask(self, commands):
+        ans = []
+        while ans not in commands:
+            ans = input(" ".join(commands)+'\n').capitalize()
+        return ans
 
-    def do_tutorial(self, argv):
-        self.step("Intro")
+    def home(self):
+        print('__MINILODE LOGO__')
+        print("Where would you like to go?")
+        commands = ["Play", "Tutorial"]
+        ans = self.ask(commands)
+        return self.step(ans)()
 
-    def get_next_values(self, state, inp):
-        if state == "Intro":
-            if inp == "Home":
-                changes = "I changed these settings".split(" ")
+    def tutorial(self):
+        print("Welcome to the tutorial")
+        game = Game()  # TODO: change this to the tutorial version
+        game.intro = "Let's go!"
+        game.prompt = "(Tutorial) "
+        game.cmdloop()
 
-                return ("Home", changes)
-                
-            elif state == "Tutorial":
-                    super(App, self).__init__()
-                    self.intro = "Beginning Tutorial"
-                    self.prompt = "(Tutorial) "
+        # Return to Home
+        return self.step("Home")()
 
-
-
-        # state == "Home":
-        #   if inp == "Play":
-        #       game = Game()
-        #       game.prompt = "(Minilode) "
-        #       game.cmdloop()
-        #       return ("Play", None)
-        #   elif inp == "Intro":
-        #       print("Intro message")
-        
-
-# Trying to override the functions available is not working. Harder than expected
-# Can try partial inheritance - 
-# Or maybe just scrape the whole idea and just do simple input - only game then use cmd.Cmd()
-
-class Home(App):
-    def __init__(self, changes):
-        super(Home, self).__init__()
-        self.intro = "You are at home"
-        self.prompt = "(Home) "
-        self.changes = changes
-
-    def do_play(self, argv):
+    def play(self):
         game = Game()
+        game.intro = "Starting Game..."
         game.prompt = "(Minilode) "
         game.cmdloop()
 
-    def do_help(self, argv):
-        cmds_doc = self.changes
-        super(Home, self).do_help(argv)
-        self.print_topics(self.doc_header, cmds_doc, 15, 80, custom=True)
+        # Return to home
+        return self.step("Home")()
 
-    def print_topics(self, header, cmds, cmdlen, maxcol, custom=False):
-        """ 
-        This is to overide cmd.Cmd method of printing help statement,
-        So that my custom message could be printed
-        """
-        if header == "Documented commands (type help <topic>):" and not custom:
-            # Override implemented command
-            return
-        else:
-            super(Home, self).print_topics(header, cmds, cmdlen, maxcol)
+    def get_next_values(self, state, inp):
+        # This State Machines is totally useless, go find a way to better use it!!
+        # Customise the print statements or something
+        print('')
+        if inp == "Home":
+            return ("Home", self.home)
 
-    def completenames(self, text, *ignored):
-        return self.changes
+        if state == "Intro":
+            if inp == "Tutorial":
+                return ("Home", self.tutorial)
+
+        if state == "Home":
+            if inp == "Play":
+                print("PLAYYYYYY")
+                return ("Home", self.play)
+
+            elif inp == "Tutorial":
+                return ("Home", self.tutorial)
 
 
-class Game(App):
+class Game(cmd.Cmd, sm.SM):
     mmap = ""
     _available_directions = ["left", "right", "up", "down"]
-    _coins_type = {' ': 0, '#': -1, 'G': 25}
-    position = [1, 1]
-    points = 0
+    _coins_type = {'J': -5, '#': -1, 'G': 25}
+    _coins_text = {'J': "Junk", '#': "Dirt", 'G': "Gold"}
+    _size = 15  # 15*15 digging ground
+    _position = [1, 1]
+    _items_price = {"Checkpoints": 5, "Sonar": 25}
+    _items_inventory = {"Checkpoints": 0, "Sonar": 0}
+    _checkpoints = {}
+    coins = 0
 
     def __init__(self):
-        super(App, self).__init__()
+        super(Game, self).__init__()
         self.intro = "__Intro message here__"
         self.create_map()
+        # self.checkpoints()  # Hide the checkpoints related fn first
 
     def create_map(self):
-        size = 15  # 15*15 digging ground
-        mmap = np.ndarray((size, size), dtype='<U1')
+        mmap = np.ndarray((self._size, self._size), dtype='<U1')
         mmap[:2, :] = ' '  # First 2 rows are for ground level
         mmap[2:, :] = '#'  # Rest are digging ground
         mmap[0, :4] = 'H'  # home
         mmap[1, 1] = 'M'  # Minilode
-        self.position = [1, 1]
-        self.coins = 30  # Starting points
+        self._position = [1, 1]
+        self.coins = 30  # Starting coins
 
         # Gold
         for i in range(10):
-            row = random.randint(2, size-1)
-            col = random.randint(0, size-1)
-            mmap[row, col] = 'G'  # Gold
+            g_row = random.randint(2, self._size-1)
+            g_col = random.randint(0, self._size-1)
+            mmap[g_row, g_col] = 'G'  # Gold
 
             # TODO
             # Get a random int --> number of gunk
             # random choices of 5*5 area matrix for i for j in range(-2,3) a.append((i,j)) --> relative position of gunk
             # These values + row/col values to get the final position of gunk
+            rel = []
+            junk = random.randint(1, 5)
+
+            for i in range(junk):
+                j_row = g_row + random.randint(-2,3)
+                j_col = g_col + random.randint(-2,3)
+                if j_row >= self._size or j_col >= self._size or j_row < 2 or j_col < 0:
+                    # Out of game area
+                    continue
+                mmap[j_row, j_col] = 'J'  # Junk
 
         self.mmap = mmap
+        self.display_map()
 
     def display_map(self):
         print(f"Cash: ${self.coins}")
-        for row in self.mmap:
+        dmap = copy.deepcopy(self.mmap)
+        for key, value in self._checkpoints.items():
+            print(key, value)
+            if dmap[value[0], value[1]] != 'M':
+                dmap[value[0], value[1]] = str(key)
+
+        print(dmap)
+        print(self.mmap)
+        for row in dmap:
             print('\t', end=' ')
             for col in row:
+                # Cover up the special stones
+                # if col in self._coins_type:
+                #     col = '#'
+
                 print(str(col), end=' ')
             print('')
 
+    def do_store(self, argv):
+        ''' Access the store '''
+        if self._position[0] != 1 or self._position[1] > 3:
+            print("Access denied!\nYou need to go back to <-- Home --> to access the store.")
+            return 
+        print("__Welcome to the store!__")
+        print("You currently have:")
+        print(f"Cash: ${self.coins}")
+        for key, value in self._items_inventory.items():
+            print(f"{key}: {value}", end='  ')
+        print("\n\nYou have enough money for:")
+
+        items_buy = []
+        for key, value in self._items_price.items():
+            if self.coins > value:
+                items_buy.append(key)
+                print(f"{key}: ${value}", end='  ')
+
+        purchase = input("\n\nWhat would you like to buy?\n").capitalize()
+        if purchase in items_buy:
+            self.coins -= self._items_price[purchase]
+            self._items_inventory[purchase] += 1
+
+            if purchase == "Checkpoints":
+                print("\nCongratulations, you just bought a checkpoint!")
+                self.checkpoints()
+            elif purchase == "Sonar":
+                print("\nCongratulations, you just upgraded your Sonar!")
+                self.sonar()
+            print(f"{purchase}: {self._items_inventory[purchase]}")
+            print(f"You are now left with ${self.coins}")
+
+    def checkpoints(self):
+        # Enable or disable do_set_checkpoints method
+        print(self._items_inventory["Checkpoints"])
+        if self._items_inventory["Checkpoints"]:
+            setattr(self, "do_set_checkpoints", self.do_set_checkpoints)
+        else:
+            # No more checkpoints left
+            print('deletinggg', getattr(self, 'do_set_checkpoints'))
+            delattr(type(self), "do_set_checkpoints")
+
+    def do_set_checkpoints(self, argv):
+        ''' Set this spot as a checkpoint '''
+        self._items_inventory["Checkpoints"] -= 1
+        self._checkpoints[len(self._checkpoints)+1] = copy.deepcopy(self._position)
+        self.checkpoints()
+
+# TODOTODOTODOTODOTODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO 
+
+    def do_teleport(self, argv):
+        ''' Teleport minilode to this spot '''
+        pass
+
+    def sonar(self):
+        # Reveal a self._items_inventory["Sonar"] tile around the robot
+        pass
+
+    def get_next_values(self, state, inp):
+        # if sonar is 1, then self.items_price, sonar shall be 75 next
+        if state == "store":
+            pass
+
+        elif state == "Outside":
+            pass
 
     def do_dig(self, direction_steps):
-        ''' Get the points in the path '''
+        ''' Get the coins in the path '''
 
         # Parse input
         lst = direction_steps.split(' ')  # "dig" --> [''], "dig <word>" --> ['<word>']
@@ -165,8 +247,11 @@ class Game(App):
             print("*** commands should be either {}".format(', '.join(self._available_directions)))
             return
 
+        # Remove consecutive spaces
+        lst = [i for i in lst if i != '']
+
         if len(lst) == 1:
-            # if steps is not provided, it defaults to 1  
+            # if steps is not provided, it defaults to 1
             lst.append(1)
         elif len(lst) > 2:
             print("*** Unknown syntax:", direction_steps)
@@ -181,50 +266,83 @@ class Game(App):
             return
 
         # Run dig function to move and add coins
-        self.dig(direction, steps)
-        return
+        return self.dig(direction, steps)
 
     def dig(self, direction, steps):
         ''' Gains coins '''
 
-        row, col = self.position
+        row, col = self._position
 
         # Adjust minilode's position
         if direction == 'left':
-            self.position[1] -= steps  # Change position
-            path = copy.deepcopy(self.mmap[row, self.position[1]:col])  # Get what's in between
-            self.mmap[row, self.position[1]:col] = ' '  # Erase what's in between
+            self.move([0, -1*steps])  # Change position
+            path = copy.deepcopy(self.mmap[row, self._position[1]:col])  # Get what's in between
+            self.mmap[row, self._position[1]:col] = ' '  # Erase what's in between
 
         elif direction == "right":
-            self.position[1] += steps
-            path = copy.deepcopy(self.mmap[row, col+1:self.position[1]+1])  # needs to add 1 to exclude it's current location
-            self.mmap[row, col+1:self.position[1]+1] = ' '
+            self.move([0, steps])
+            path = copy.deepcopy(self.mmap[row, col+1:self._position[1]+1])  # needs to add 1 to exclude it's current location
+            self.mmap[row, col+1:self._position[1]+1] = ' '
 
         elif direction == "up":
-            self.position[0] -= steps
-            path = copy.deepcopy(self.mmap[self.position[0]:row, col])
-            self.mmap[self.position[0]:row, col] = ' '
+            self.move([-1*steps, 0])
+            path = copy.deepcopy(self.mmap[self._position[0]:row, col])
+            self.mmap[self._position[0]:row, col] = ' '
 
         elif direction == "down":
-            self.position[0] += steps
-            path = copy.deepcopy(self.mmap[row+1:self.position[0]+1, col])
-            self.mmap[row+1:self.position[0]+1, col] = ' '
+            self.move([steps, 0])
+            path = copy.deepcopy(self.mmap[row+1:self._position[0]+1, col])
+            self.mmap[row+1:self._position[0]+1, col] = ' '
         
         # Add coins
-        self.addcoins(path)
+        end = self.addcoins(path)
+
+        if end:
+            return end
 
         # Update the position marking
         self.mmap[row, col] = ' '
-        row, col = self.position
+        row, col = self._position
         self.mmap[row, col] = 'M'
 
         # Display map
         self.display_map()
 
-    def addcoins(self, path):
-        for i in path:
-            self.coins += self._coins_type[i]
+    def move(self, steps):
+        # Game area is essentially _size*_size, minus the first row for HHHH markers
+        for i in range(2):
+            self._position[i] += steps[i]
 
+            if self._position[i] < 1-i:  # First row is skipped
+                self._position[i] = 1-i
+
+            elif self._position[i] >= self._size:
+                self._position[i] = self._size-1
+
+    def addcoins(self, path):
+        items = {i:0 for i in self._coins_type}
+        for i in path:
+            if i == ' ':
+                continue
+            self.coins += self._coins_type[i]
+            items[i] += 1
+
+            if self.coins < 0:
+                print("Oh noes, you went out of coins...")
+                print("You lose :(\n")
+                return self.do_quit("Lose liaos")
+
+        print("Items found:  ", end='')
+        for key, value in items.items():
+            print(f"{self._coins_text[key]}: {value}", end="  ")
+
+        print('')
+
+    def do_quit(self, argv):
+        print("__Game Stats__")
+        print("~~ Thanks for playing ~~")
+        print("Bye! :>")
+        return 1
 
     def complete_dig(self, text, line, begidx, endidx):
         # text is the string we are matching against, all returned matches must begin with it
@@ -241,7 +359,5 @@ class Game(App):
         print("\t{: <13} {: <7} needs to be an integer.".format("steps", arr))
 
 app = App()
-app.start()
-app.intro()
 # App().step(inp)
 # App().cmdloop()
