@@ -1,6 +1,6 @@
 # MiniLode
 
-MiniLode is a mining game which you, the minilode is on the task to mine for precious gems in the earth's mantle. Faced with difficult situations and tough twist and turns along the way, you need to decide which steps to take, and dig out your own path to success.
+MiniLode is a mining game which you, the MiniLode is on the task to mine for precious gems in the earth's mantle. Faced with difficult situations and tough twist and turns along the way, you need to decide which steps to take, and dig out your own path to success.
 
 # Notes
 
