@@ -1,37 +1,34 @@
-import re
 import cmd
 import copy
 import random
 import numpy as np
 from libdw import sm
 
+
 try:
     from pyreadline import Readline
-except:
+except ImportError:
     print(
         "Readline module part of the python standard library, but it does not work in windows. "
         "Hence, to enable TAB completion features, run the command:\n"
         "pip install pyreadline")
 
-'''
-# TODO
-# Major Error: Currently once do_set_checkpoints is deleted, cannot be set back
-# Tutorial:
-I thought of a short cut to make my tutorial super easy to implement
-Since I already have help functions, I shall just ask them to use the help functions
-Then I just write a bit on the game mechanics and shortcut
-Then provide them with unlimited health as a sandbox for them
-
-# Game mechanic: Anyway to add spaces after do_dig, so that it will be dig .
-# Game mechanic: Show what has been excavated so that users would know
-# if you want: When you lose, print the mmap of the losing position
-'''
 
 class App(cmd.Cmd, sm.SM):
+    ''' Main app '''
     start_state = "Intro"
+    minilode_logo = """
+                     ___  ___   __   __   __   __   __        ______    _______   _______ 
+                    |   \/   | |  | |  \ |  | |  | |  |      /  __  \  |       \ |   ____|
+                    |  \  /  | |  | |   \|  | |  | |  |     |  |  |  | |  .--.  ||  |__   
+                    |  |\/|  | |  | |  . `  | |  | |  |     |  |  |  | |  |  |  ||   __|  
+                    |  |  |  | |  | |  |\   | |  | |  `----.|  `--'  | |  '--'  ||  |____ 
+                    |__|  |__| |__| |__| \__| |__| |_______| \______/  |_______/ |_______|
+
+                    """
 
     def __init__(self):
-        print("\n__Start message here__")
+        print("Game initialising...")
         super(App, self).__init__()
         self.start()
         ans = self.step("Intro")
@@ -40,30 +37,28 @@ class App(cmd.Cmd, sm.SM):
     def ask(self, commands):
         ans = []
         while ans not in commands:
-            ans = input(" ".join(commands)+'\n').capitalize()
+            ans = input(" ".join(commands) + '\n').capitalize()
         return ans
 
     def home(self):
-        print('__MINILODE LOGO__')
+        print(self.minilode_logo)
         print("Where would you like to go?")
         commands = ["Play", "Tutorial"]
         ans = self.ask(commands)
         return self.step(ans)()
 
     def tutorial(self):
-        return self.step("Tutorial")()  # Because this calls tutorial twice, there would be 2 lines spacing
-
+        return self.step("Tutorial")()  # Bug: Because this calls tutorial twice, there would be 2 lines spacing
 
     def get_next_values(self, state, inp):
-        # This State Machines is totally useless, go find a way to better use it!!
-        # Customise the print statements or something
+        ''' Refer to the diagram drawn 
+        '''
         print('')
 
         if state == "Intro":
             if inp == "Intro":
                 # Introductory message
-                print("Once upon a time.....")
-                print("\n__Welcome to Minilode__")
+                print("\nWelcome to ", self.minilode_logo)
                 ans = input("press <enter> to continue: ")
                 return ("Intro", ans)
             elif inp == 'skip':
@@ -73,12 +68,13 @@ class App(cmd.Cmd, sm.SM):
 
         if state == "Tutorial":
             difficulty = 1
-            game = Game(difficulty, tutorial=True)  # TODO: change this to the tutorial version
+            game = Game(difficulty, tutorial=True)
             game.intro = "First command, enter 'display_map'"
             game.prompt = "(Tutorial) "
             game.cmdloop()
 
-            print("Next time just type 'skip' to skip this tutorial!")
+            print("\nNext time just type 'skip' to skip this tutorial!")
+            print("Homepage:")
             return ("Home", self.home)
 
         if state == "Home":
@@ -87,9 +83,9 @@ class App(cmd.Cmd, sm.SM):
                 print("What would you like your level of difficulty to be?")
                 try:
                     difficulty = int(input("1  2  3\n"))
-                    if difficulty not in [1,2,3]:
+                    if difficulty not in [1, 2, 3]:
                         raise ValueError
-                except: 
+                except ValueError:
                     print("Please select either 1, 2, 3")
                     return self.step("Home")()
                 game = Game(difficulty)
@@ -103,21 +99,31 @@ class App(cmd.Cmd, sm.SM):
 
 class Game(cmd.Cmd):
     mmap = ""
-    _available_directions = ["left", "right", "up", "down"]
+    available_directions = ["left", "right", "up", "down"]
+    game_stats = {'L': 0, 'J': 0, '#': 0, 'G': 0, 'R': 0}
     _coins_type = {'L': -1000, 'J': -5, '#': -1, 'G': 25, 'R': 75}
     _coins_text = {'L': "Lava", 'J': "Junk", '#': "Dirt", 'G': "Gold", 'R': "Ruby"}
     _position = [1, 1]
     _checkpoints = {}
-    coins = 0
 
-    _text = """Hello! Welcome to the tutorial
-    To view the next intruction, just enter 'display_map'
-    Bye!
-    # Intro message: type <help or ?> followed by <command> to get more info on the command
-    # Intro message: when an empty line is entered, the previous input would be run. So becareful on that!
-    # Intro message: use up down keys to cycle through command history
-    # Intro message: press <tab> to auto complete input or to show list of commands available
-    """
+    _text = """Hello! Welcome to the tutorial.
+    To view the next instruction, just enter 'display_map'.
+    Was that hard? Hmmm next time, just press enter on an empty input to run the previous command. Try it!
+    Great :)
+    Now type <help or ?> followed by <command> to get more info on the commands. Eg. help display_map
+    Well done!
+    If you want to move down, just enter 'dig down <no. of steps>'. If no. of steps is not provided, it will default to 1. Go on, try it! Eg. dig down
+    Notice that your coins decreases. Here is the legend -->  \tL: Lava, instant death!!  \tJ: Junk, -$5  \t#: Dirt, -$1  \tG: Gold, +$25  \tR: Ruby, +$75
+    So what are coins for? Go back to home base to find out! Eg. dig up 2
+    Home base is the first 4 tiles on the left, above ground. It's nicely demarcated by the 'H'.
+    Now, type 'help store' to read up on the items, and 'store' to enter!
+    Careful tho, use your coins wisely, as the player with the highest amount of coins at the end of the game wins!
+    That's all that you need to know to get going :)
+    Tired of typing full commands? Here's a tip: press <tab> to auto-complete input or to show list of commands available.
+    Also, you can use up down keys to cycle through command history.
+    Enter 'quit' to quit this tutorial.
+    Oh wait... Just remembered, the blocks will all be covered with '#' instead :>
+    Have fun!"""
 
     def __init__(self, difficulty, tutorial=False):
         super(Game, self).__init__()
@@ -130,7 +136,6 @@ class Game(cmd.Cmd):
         self._items_sonar_price = [25*3**i for i in range(self.difficulty+1)]  # 25, 75, 225, 675
         self._size = 5 + self.difficulty*10  # 15*15, 25*25, 35*35) digging ground
         self.create_map()
-        # self.checkpoints()  # Hide the checkpoints related fn first
 
     def create_map(self):
         mmap = np.ndarray((self._size, self._size), dtype='<U1')
@@ -139,20 +144,20 @@ class Game(cmd.Cmd):
         mmap[0, :4] = 'H'  # home
         mmap[1, 1] = 'M'  # Minilode
         self._position = [1, 1]
-        self.coins = 20 + 10*self.difficulty  # 30, 40, 50 --> starting coins
+        self.coins = 10 + 20*self.difficulty  # 30, 50, 70 --> starting coins
         if self.tutorial:
             self.coins = 1000
 
         # Generate Ruby and Lava
         diff = self.difficulty-1
-        for i in range(random.randint((diff)*4, (diff)*6)):  # 0, 4-6, 8-10 --> no. of Ruby
+        for i in range(random.randint(diff*4, diff*6)):  # 0, 4-6, 8-10 --> no. of Ruby
             r_row, r_col = 0, 0
             while mmap[r_row, r_col] != '#':
                 r_row = random.randint(10, self._size-3)  # Must be deep enough (ie. gives chance to buy sonar)
                 r_col = random.randint(2, self._size-3)  # 2 tiles away from the game boundary
             mmap[r_row, r_col] = 'R'
 
-            if random.randint(0,1):
+            if random.randint(0, 1):
                 l_row, l_col = 0, 0
                 while mmap[l_row, l_col] != '#':
                     l_row = r_row + random.randint(0, 2)
@@ -175,8 +180,8 @@ class Game(cmd.Cmd):
             rel = []
             for i in range(junk):
                 # Junk position = gold position +/- relative position to gold position
-                j_row = g_row + random.randint(-2-(diff)//2,3+(diff)//2)  # 2, 2, 3
-                j_col = g_col + random.randint(-2-(diff)//2,3+(diff)//2)
+                j_row = g_row + random.randint(-2 - diff//2, 3 + diff//2)  # 2, 2, 3
+                j_col = g_col + random.randint(-2 - diff//2, 3 + diff//2)
 
                 # Out of game area
                 if j_row >= self._size or j_col >= self._size or j_row < 2 or j_col < 0:
@@ -191,6 +196,7 @@ class Game(cmd.Cmd):
         self.display_map()
 
     def do_display_map(self, argv):
+        ''' \tWhen you type 'display_map', the current playing area would be displayed. '''
         self.display_map()
 
     def display_map(self):
@@ -210,20 +216,23 @@ class Game(cmd.Cmd):
                 if col_val in self._coins_type:
                     if not self._show:
                         # if not in Sonar radius, replace it
-                        if not(abs(self._position[0] - row_in) <= self._items_inventory["Sonar"] and \
-                            abs(self._position[1] - col_in) <= self._items_inventory["Sonar"]):
+                        if not(abs(self._position[0] - row_in) <= self._items_inventory["Sonar"]
+                                and abs(self._position[1] - col_in) <= self._items_inventory["Sonar"]):
                             col_val = '#'
                 print(str(col_val), end=' ')
             print('')
 
         if self.tutorial:
-            next(self._tutorial_text)
+            try:
+                next(self._tutorial_text)
+            except StopIteration:
+                pass
 
     def do_store(self, argv):
         ''' Access the store '''
         if self._position[0] != 1 or self._position[1] > 3:
             print("Access denied!\nYou need to go back to <-- Home --> to access the store.")
-            return 
+            return
         print("__Welcome to the store!__")
         print("You currently have:")
         print(f"Cash: ${self.coins}")
@@ -261,25 +270,33 @@ class Game(cmd.Cmd):
     def checkpoints(self):
         # Enable or disable do_set_checkpoints method
         if self._items_inventory["Checkpoints"]:
-            setattr(self, "do_set_checkpoints", self.do_set_checkpoints)
+            do_set_checkpoints = self.set_checkpoints
+            do_set_checkpoints.__func__.__name__ = 'do_set_checkpoints'
+            do_set_checkpoints.__func__.__qualname__ = __class__.__qualname__ + '.do_set_checkpoints'
+            Game.do_set_checkpoints = do_set_checkpoints
         else:
             # No more checkpoints left
             delattr(type(self), "do_set_checkpoints")
 
-    def do_set_checkpoints(self, argv):
-        ''' Set this spot as a checkpoint '''
+    def set_checkpoints(self, argv):
+        ''' \tSet this spot as a checkpoint '''
         self._items_inventory["Checkpoints"] -= 1
         self._checkpoints[len(self._checkpoints)+1] = copy.deepcopy(self._position)
         print(f"You are now left with {self._items_inventory['Checkpoints']} checkpoints.")
-        setattr(self, "do_teleport", self.do_teleport)
+
+        # Enable do_teleport method
+        do_teleport = self.teleport
+        do_teleport.__func__.__name__ = 'do_teleport'
+        do_teleport.__func__.__qualname__ = __class__.__qualname__ + '.do_teleport'
+        Game.do_teleport = do_teleport
         self.checkpoints()
         self.display_map()
 
-    def do_teleport(self, argv):
-        ''' Teleport minilode to this spot '''
+    def teleport(self, argv):
+        '''\tTeleport minilode to this spot '''
         try:
             argv = int(argv)
-        except:
+        except ValueError:
             if argv == '':
                 argv = "You need to specify the checkpoint no. after the command"
             print("*** Unknown syntax:", argv)
@@ -294,8 +311,8 @@ class Game(cmd.Cmd):
         self._position = self._checkpoints[argv]
 
         del self._checkpoints[argv]
-        print(self._checkpoints)
-        if self._checkpoints:
+
+        if not self._checkpoints:
             delattr(type(self), "do_teleport")
 
         self.display_map()
@@ -305,8 +322,8 @@ class Game(cmd.Cmd):
 
         # Parse input
         lst = direction_steps.split(' ')  # "dig" --> [''], "dig <word>" --> ['<word>']
-        if lst[0] not in self._available_directions:
-            print("*** commands should be either {}".format(', '.join(self._available_directions)))
+        if lst[0] not in self.available_directions:
+            print("*** commands should be either {}".format(', '.join(self.available_directions)))
             return
 
         # Remove consecutive spaces
@@ -323,7 +340,7 @@ class Game(cmd.Cmd):
         direction, steps = lst
         try:
             steps = int(steps)
-        except:
+        except ValueError:
             print("*** You need to type in an integer after the direction")
             return
 
@@ -355,9 +372,9 @@ class Game(cmd.Cmd):
             self.move([steps, 0])
             path = copy.deepcopy(self.mmap[row+1:self._position[0]+1, col])
             self.mmap[row+1:self._position[0]+1, col] = ' '
-        
+
         self.update_m([row, col], self._position)
-        
+
         # Add coins
         end = self.addcoins(path)
         if end:
@@ -384,17 +401,19 @@ class Game(cmd.Cmd):
 
     def addcoins(self, path):
         lose = False
-        items = {i:0 for i in self._coins_type}
+        items = {i: 0 for i in self._coins_type}
         for i in path:
             if i == ' ':
                 continue
             self.coins += self._coins_type[i]
             items[i] += 1
+            self.game_stats[i] += 1
             if self.coins <= 0:
                 if i == 'L':
                     print("Jeng Jeng Jenggggg")
                     print("You stepped on Lava")
-                else: print("Oh noes, you went out of coins...")
+                else:
+                    print("Oh noes, you went out of coins...")
                 print("You lose :(\n")
                 lose = True
                 break
@@ -404,17 +423,26 @@ class Game(cmd.Cmd):
             if value != 0:
                 print(f"{self._coins_text[key]}: {value}", end="  ")
         print('')
-        
+
         if lose:
             return self.do_quit("Lose liaos")
 
     def do_quit(self, argv):
+        ''' \tEnter 'quit' to quit the game '''
         self._show = True
         self.tutorial = False  # To not print the next instruction
         self.display_map()
-        print("__Game Stats__")
+        print("\n__Game Stats__\n")
+        print("You collected: ", end='')
+        total_coins = 0
+        for key, value in self.game_stats.items():
+            if value != 0:
+                print(f"{self._coins_text[key]}: {value}", end="  ")
+            if key == 'G' or key == 'R':
+                total_coins += value * self._coins_type[key]
+        print(f'\nTotal Coins collected: ${total_coins}')
         print("~~ Thanks for playing ~~")
-        print("Bye! :>")
+        print("Bye! :)")
         return 1
 
     def complete_dig(self, text, line, begidx, endidx):
@@ -423,12 +451,35 @@ class Game(cmd.Cmd):
         # begidx is the beginning index in the line of the text being matched
         # endidx is the end index in the line of the text being matched
 
-        return [i+' ' for i in self._available_directions if i.startswith(text)]
+        return [i+' ' for i in self.available_directions if i.startswith(text)]
 
     def help_dig(self):
         arr = "-->"
         print("\t{: <13} {: <7} dig <direction> <steps>".format("format", arr))
-        print("\t{: <13} {: <7} {}".format("direction", arr, ', '.join(self._available_directions)))
-        print("\t{: <13} {: <7} needs to be an integer.".format("steps", arr))
+        print("\t{: <13} {: <7} {}".format("direction", arr, ', '.join(self.available_directions)))
+        print("\t{: <13} {: <7} needs to be an integer".format("steps", arr))
 
-app = App()
+    def help_store(self):
+        print("\tWelcome to the store!")
+        print("\tHere, you can buy Checkpoints or upgrade your Sonar.")
+        print("\tSonar helps you to see what's underneath those dirt blocks, regardless if it's gems or a deadly path.")
+        print("\tYour Sonar level tells you how far you can see around you.")
+        print("\tCheckpoints are little special. This advanced piece of technology instantly teleports you to the dropped location.")
+        print("\tBut haha, since it is this special, it's only one time use only.")
+        print("\tWhat you waiting for? Enter 'store' on your home base (first 4 tiles above ground) to get your items now!")
+
+    def help_set_checkpoints(self):
+        print("\tTo use teleport, you must first set up the portal first.")
+        print("\tDo this by entering this command to drop the checkpoint on the spot.")
+        print("\tWhen you feel like it, just enter 'teleport <number>', and voilà, watch the magic unfold!")
+
+    def help_teleport(self):
+        print("\t{: <13} {: <7} teleport <number>".format("format", "-->"))
+        print("\t{: <13} {: <7} number shown on the map".format("number", "-->"))
+
+
+try:
+    app = App()
+except KeyboardInterrupt:
+    print("Thanks for playing the game!")
+    print("Goodbye :)")
