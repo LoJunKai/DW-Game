@@ -36,6 +36,8 @@ MiniLode is a mining game which you, the MiniLode is on the task to mine for pre
 
 # State Machines
   - Start page, tutorial, and play mode
+
+![Please go to https://github.com/LoJunKai/DW-Game.git if you cannot see this image](https://github.com/LoJunKai/DW-Game/raw/master/State_Diagrams.png)
   
 # Mechanics
 
