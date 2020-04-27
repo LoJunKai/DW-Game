@@ -2,7 +2,7 @@
 
 MiniLode is a mining game which you, the MiniLode is on the task to mine for precious gems in the earth's mantle. Faced with difficult situations and tough twist and turns along the way, you need to decide which steps to take, and dig out your own path to success.
 
-[(Please click here for video)]()
+[(Please click here for video)](https://github.com/LoJunKai/DW-Game/raw/master/DW%20Game%20Video.mp4)
 
 ![Please go to https://github.com/LoJunKai/DW-Game.git if you cannot see this image](https://github.com/LoJunKai/DW-Game/raw/master/Demo.png)
 
