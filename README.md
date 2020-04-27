@@ -6,40 +6,19 @@ MiniLode is a mining game which you, the MiniLode is on the task to mine for pre
 
 ![Please go to https://github.com/LoJunKai/DW-Game.git if you cannot see this image](https://github.com/LoJunKai/DW-Game/raw/master/Demo.png)
 
-# Notes
-
-
-## Stage 1 of development
-  - Randomised world
-  - Gold blocks
-  - [Use cmd to parse command line inputs](https://wiki.python.org/moin/CmdModule)
-  - Use readline to enable input history
-  - Implement state machines
-  - walking
-  - digging and collecting coins
-
-## Stage 2 of development
-  - The blocks will be covered with #, until digged (or undigged ' ', digged '.'(dot))
-  - Setting of checkpoints available (bought from the store) (can teleport between checkpoints)
-  - Difficulty levels implemented (easy, medium, hard)
-    - easy --> same as stage 1
-    - medium --> Have junk blocks that saps 1 energy to clean
-    - hard (stage 3) --> Lava blocks that instantly kill the player
-  - Blocks generator function is tied to the gold blocks - higher distribution of junk near gold blocks
-
-## Stage 3 of development
-  - Only closer blocks will be revealed, but this comes as an upgrade
-  - Implement tutorial
-
-# Tutorial
-  - Short story and instructions on how to play
-  - Gets unlimited coins
-  - All blocks will be shown
 
 # State Machines
   - Start page, tutorial, and play mode
 
 ![Please go to https://github.com/LoJunKai/DW-Game.git if you cannot see this image](https://github.com/LoJunKai/DW-Game/raw/master/State_Diagrams.png)
+  
+ 
+# Tutorial
+
+  - Short story and instructions on how to play
+  - Gets unlimited coins
+  - All blocks will be shown
+  
   
 # Mechanics
 
@@ -65,3 +44,28 @@ MiniLode is a mining game which you, the MiniLode is on the task to mine for pre
 | No. of Lava (per Ruby) | - | 0-1 | 0-1 |
 | Position of Junk (rel to Gold) | ±2 | ±2 | ±3 |
 | Position of Lava (rel to Ruby) | - | ±2 | ±2 |
+
+
+# Notes
+
+## Stage 1 of development
+  - Randomised world
+  - Gold blocks
+  - [Use cmd to parse command line inputs](https://wiki.python.org/moin/CmdModule)
+  - Use readline to enable input history
+  - Implement state machines
+  - Walking
+  - Digging and collecting coins
+
+## Stage 2 of development
+  - The blocks will be covered with #, until digged (or undigged ' ', digged '.'(dot))
+  - Setting of checkpoints available (bought from the store) (can teleport between checkpoints)
+  - Difficulty levels implemented (easy, medium, hard)
+    - easy --> same as stage 1
+    - medium --> Have junk blocks that saps 1 energy to clean
+    - hard (stage 3) --> Lava blocks that instantly kill the player
+  - Blocks generator function is tied to the gold blocks - higher distribution of junk near gold blocks
+
+## Stage 3 of development
+  - Only closer blocks will be revealed, but this comes as an upgrade
+  - Implement tutorial
