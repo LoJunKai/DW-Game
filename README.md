@@ -28,14 +28,15 @@
 
 ## Stage 3 of development
   - Only closer blocks will be revealed, but this comes as an upgrade
+  - Implement tutorial
 
 # Tutorial
-  - Short story and guided game
+  - Short story and instructions on how to play
+  - Gets unlimited coins
+  - All blocks will be shown
 
 # State Machines
-
   - Start page, tutorial, and play mode
-  
   
 # Mechanics
 
@@ -47,3 +48,17 @@
 | Dirt | -1 | Normal ground |
 | Junk | -5 | This sticky mess clogs up your drill bits |
 | Lava | -1000 | This corrodes away your armour in seconds |
+
+### Parameters
+|  | Easy | Medium | Difficult |
+|--| :---: | :---: | :---: |
+| Starting Coins | 30 | 50 | 70 |
+| Playing Area | 15\*15 | 25\*25 | 35\*35 | 
+| Checkpoints Price | 5 | 10 | 15 |
+| Sonar Max Level | 2 ($75) | 3 ($225) | 4 ($675) |
+| No. of Ruby | 0 | 4-6 | 8-12 |
+| No. of Gold | 10 | 15 | 20 |
+| No. of Junk (per Gold) | 1-5 | 2-7 | 3-9 |
+| No. of Lava (per Ruby) | - | 0-1 | 0-1 |
+| Position of Junk (rel to Gold) | ±2 | ±2 | ±3 |
+| Position of Lava (rel to Ruby) | - | ±2 | ±2 |
